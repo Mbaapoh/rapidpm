@@ -1,0 +1,34 @@
+services:
+  onlyoffice-server:
+    container_name: onlyoffice-server
+    image: onlyoffice/documentserver:8.2
+    expose:
+      - "80"
+    environment:
+      - JWT_SECRET=your-256-bit-secret
+
+  rapidpm-gateway-app:
+    container_name: rapidpm-gateway-app
+    build:
+      context: .
+    expose:
+      - "80"
+    environment:
+      - ADDRESS=0.0.0.0
+      - DOCUMENT_SERVER_PRIVATE_URL=http://reverseproxy:8080
+      - DOCUMENT_SERVER_PUBLIC_URL=http://localhost:8080
+      - EXAMPLE_URL=http://reverseproxy
+      - JWT_SECRET=your-256-bit-secret
+      - PORT=80
+
+  reverseproxy:
+    container_name: reverseproxy
+    build:
+      context: .
+      target: reverseproxy
+    depends_on:
+      - onlyoffice-server
+      - rapidpm-gateway-app
+    ports:
+      - "80:80"
+      - "8080:8080"
