@@ -1,4 +1,4 @@
-ervices:
+services:
   onlyoffice-server:
     container_name: onlyoffice-server
     image: onlyoffice/documentserver:8.2
@@ -6,6 +6,7 @@ ervices:
       - "80"
     environment:
       - JWT_SECRET=your-256-bit-secret
+    restart: always  # Ensure this container restarts on reboot or failure
 
   rapidpm-gateway-app:
     container_name: rapidpm-gateway-app
@@ -20,6 +21,7 @@ ervices:
       - EXAMPLE_URL=http://reverseproxy
       - JWT_SECRET=your-256-bit-secret
       - PORT=80
+    restart: always  # Ensure this container restarts on reboot or failure
 
   reverseproxy:
     container_name: reverseproxy
@@ -36,16 +38,16 @@ ervices:
       - ./proxy:/etc/nginx
       - /etc/letsencrypt:/etc/letsencrypt:ro
       - /tmp/acme-challenge:/tmp/acme-challenge
-    restart: always
-
+    restart: always  # Ensure this container restarts on reboot or failure
 
   letsencrypt:
     container_name: certbot
     image: certbot/certbot
-    command: sh -c "certbot certonly --webroot -w /tmp/acme-challenge/ -d onlyoffice.rapidpm.uk -d app.rapidpm.uk --expand --text --agree-tos --email test@mbaapoh.com --rsa-key-size 4096 --verbose --keep-until-expiring --preferred-challenges=http  --non-interactive"
+    command: sh -c "certbot certonly --webroot -w /tmp/acme-challenge/ -d onlyoffice.rapidpm.uk -d app.rapidpm.uk --expand --text --agree-tos --email test@mbaapoh.com --rsa-key-size 4096 --verbose --keep-until-expiring --preferred-challenges=http --non-interactive"
     entrypoint: ""
     volumes:
       - "/etc/letsencrypt:/etc/letsencrypt"
       - "/tmp/acme-challenge:/tmp/acme-challenge"
     environment:
       - TERM=xterm
+    
