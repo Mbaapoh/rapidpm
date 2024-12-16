@@ -1,0 +1,51 @@
+ervices:
+  onlyoffice-server:
+    container_name: onlyoffice-server
+    image: onlyoffice/documentserver:8.2
+    expose:
+      - "80"
+    environment:
+      - JWT_SECRET=your-256-bit-secret
+
+  rapidpm-gateway-app:
+    container_name: rapidpm-gateway-app
+    build:
+      context: .
+    expose:
+      - "80"
+    environment:
+      - ADDRESS=0.0.0.0
+      - DOCUMENT_SERVER_PRIVATE_URL=http://reverseproxy:8080
+      - DOCUMENT_SERVER_PUBLIC_URL=http://onlyoffice.rapidpm.uk
+      - EXAMPLE_URL=http://reverseproxy
+      - JWT_SECRET=your-256-bit-secret
+      - PORT=80
+
+  reverseproxy:
+    container_name: reverseproxy
+    build:
+      context: .
+      target: reverseproxy
+    depends_on:
+      - onlyoffice-server
+      - rapidpm-gateway-app
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./proxy:/etc/nginx
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - /tmp/acme-challenge:/tmp/acme-challenge
+    restart: always
+
+
+  letsencrypt:
+    container_name: certbot
+    image: certbot/certbot
+    command: sh -c "certbot certonly --webroot -w /tmp/acme-challenge/ -d onlyoffice.rapidpm.uk -d app.rapidpm.uk --expand --text --agree-tos --email test@mbaapoh.com --rsa-key-size 4096 --verbose --keep-until-expiring --preferred-challenges=http  --non-interactive"
+    entrypoint: ""
+    volumes:
+      - "/etc/letsencrypt:/etc/letsencrypt"
+      - "/tmp/acme-challenge:/tmp/acme-challenge"
+    environment:
+      - TERM=xterm
